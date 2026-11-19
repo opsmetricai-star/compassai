@@ -27,7 +27,7 @@ export async function generateGrounded(opts: {
 }): Promise<AiResult> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("AI is not configured: GEMINI_API_KEY is missing on the server.");
-  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  const model = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
   const ai = new GoogleGenAI({ apiKey: key });
 
   const context = opts.passages.map((p, i) => `[${i + 1}] (${p.title})\n${p.content}`).join("\n\n");
@@ -43,12 +43,33 @@ export async function generateGrounded(opts: {
   const history = (opts.history ?? []).slice(-6).map((m) => `${m.role}: ${m.content}`).join("\n");
   const prompt = `SOURCES:\n${context || "(none found)"}\n\n${history ? `RECENT CONVERSATION:\n${history}\n\n` : ""}QUESTION:\n${opts.question}`;
 
-  const res = await ai.models.generateContent({
-    model,
+  // Try the configured model, then a fallback; each call has a hard timeout so a hung request cannot stall the app.
+  const candidates = [...new Set([model, "gemini-3.1-flash-lite"])];
+  let res: Awaited<ReturnType<typeof call>> | undefined;
+  let used = model;
+  let lastErr: unknown;
+  for (const m of candidates) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try { res = await call(m); used = m; break; } catch (e) {
+        lastErr = e;
+        if (!/503|UNAVAILABLE|429|overload|high demand|abort|timeout/i.test(String(e))) throw e;
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+    }
+    if (res) break;
+  }
+  if (!res) throw lastErr ?? new Error("AI unavailable");
+  const parsed = Out.safeParse(JSON.parse(res.text ?? "{}"));
+  if (!parsed.success) throw new Error("The AI returned an unreadable response. Please try again.");
+  return { ...parsed.data, model: used };
+
+  function call(m: string) { return ai.models.generateContent({
+    model: m,
     contents: prompt,
     config: {
       systemInstruction: system,
       temperature: 0.2,
+      httpOptions: { timeout: 25_000 },
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
@@ -60,10 +81,7 @@ export async function generateGrounded(opts: {
         required: ["answer", "cited", "insufficient"],
       },
     },
-  });
-  const parsed = Out.safeParse(JSON.parse(res.text ?? "{}"));
-  if (!parsed.success) throw new Error("The AI returned an unreadable response. Please try again.");
-  return { ...parsed.data, model };
+  }); }
 }
 
 export function chunkText(text: string, size = 900, overlap = 120): string[] {

@@ -188,21 +188,31 @@ begin
 end $$;
 
 create or replace function public.refund_credit() returns void
-language sql security definer set search_path = public as $$
+language plpgsql security definer set search_path = public as $
+begin
   update public.profiles set credits_used = greatest(credits_used - 1, 0) where id = auth.uid();
-$$;
+  delete from public.usage_events where id = (
+    select id from public.usage_events where owner_id = auth.uid() order by created_at desc limit 1);
+end $;
 
 -- Passage retrieval; runs as the caller so RLS applies.
 create or replace function public.search_chunks(p_workspace uuid, p_query text, p_limit int default 6)
 returns table (chunk_id uuid, document_id uuid, title text, content text, rank real)
 language sql stable as $$
-  select c.id, c.document_id, d.title, c.content,
-         ts_rank(c.tsv, websearch_to_tsquery('english', p_query)) as rank
-    from public.chunks c join public.documents d on d.id = c.document_id
-   where (p_workspace is null or c.workspace_id = p_workspace)
-     and c.tsv @@ websearch_to_tsquery('english', p_query)
-   order by rank desc limit p_limit;
+  with q as (
+    select nullif(replace(plainto_tsquery('english', p_query)::text, ' & ', ' | '), '')::tsquery as tq
+  )
+  select c.id, c.document_id, d.title, c.content, ts_rank(c.tsv, q.tq) as rank
+    from public.chunks c
+    join public.documents d on d.id = c.document_id
+    cross join q
+   where q.tq is not null
+     and (p_workspace is null or c.workspace_id = p_workspace)
+     and c.tsv @@ q.tq
+   order by rank desc
+   limit p_limit;
 $$;
+grant execute on function public.search_chunks(uuid, text, int) to authenticated, service_role;
 
 -- Storage bucket for uploaded files
 insert into storage.buckets (id, name, public) values ('documents', 'documents', false) on conflict do nothing;
@@ -230,3 +240,16 @@ drop trigger if exists limit_workspaces on public.workspaces;
 create trigger limit_workspaces before insert on public.workspaces for each row execute function public.enforce_plan_limits();
 drop trigger if exists limit_agents on public.agents;
 create trigger limit_agents before insert on public.agents for each row execute function public.enforce_plan_limits();
+
+-- API role grants (newer Supabase projects do not grant these automatically).
+-- RLS above still restricts what 'authenticated' can touch.
+grant usage on schema public to anon, authenticated, service_role;
+grant all on all tables in schema public to service_role;
+grant select, insert, update, delete on all tables in schema public to authenticated;
+revoke all on public.payments, public.leads from authenticated, anon;
+revoke update on public.profiles from authenticated;
+grant update (full_name) on public.profiles to authenticated;
+grant select on public.usage_events to authenticated;
+revoke insert, update, delete on public.usage_events from authenticated;
+grant execute on all functions in schema public to authenticated, service_role;
+revoke execute on function public.handle_new_user() from authenticated, anon;

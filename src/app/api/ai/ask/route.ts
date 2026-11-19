@@ -51,10 +51,11 @@ export async function POST(req: Request) {
       .filter(Boolean)
       .map((p: { document_id: string; title: string; content: string }) => ({ document_id: p.document_id, title: p.title, snippet: p.content.slice(0, 220) }));
 
-    await supabase.from("messages").insert([
-      { conversation_id: conversationId, owner_id: u.user.id, role: "user", content: question },
+    const { error: mErr } = await supabase.from("messages").insert([
+      { conversation_id: conversationId, owner_id: u.user.id, role: "user", content: question, sources: [], model: null },
       { conversation_id: conversationId, owner_id: u.user.id, role: "assistant", content: result.answer, sources, model: result.model },
     ]);
+    if (mErr) console.error("message save failed", mErr.message);
     return NextResponse.json({ conversationId, answer: result.answer, sources, insufficient: result.insufficient, model: result.model });
   } catch (e) {
     await supabase.rpc("refund_credit");
