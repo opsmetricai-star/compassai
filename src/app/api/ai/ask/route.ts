@@ -60,6 +60,6 @@ export async function POST(req: Request) {
   } catch (e) {
     await supabase.rpc("refund_credit");
     const msg = e instanceof Error ? e.message : "The request failed.";
-    return NextResponse.json({ error: msg.includes("GEMINI") ? msg : "The AI request failed. Your credit was not charged. Please try again." }, { status: 502 });
+    return NextResponse.json({ error: msg.includes("temporarily unavailable") ? msg : "The AI request failed. Your credit was not charged. Please try again." }, { status: 502 });
   }
 }

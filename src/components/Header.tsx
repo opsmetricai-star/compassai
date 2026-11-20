@@ -7,19 +7,9 @@ import { Logo } from "./Logo";
 
 export function Header() {
   const [open, setOpen] = useState(false);
-  const [banner, setBanner] = useState(true);
-  const [acc, setAcc] = useState<string | null>(null);
+    const [acc, setAcc] = useState<string | null>(null);
   return (
     <header className="sticky top-0 z-50 bg-white shadow-[0_1px_20px_rgba(0,0,0,.05)]">
-      {banner && (
-        <div className="bg-[#0a0a5c] text-white text-[13px]">
-          <div className="container-x flex items-center justify-center gap-3 py-2 relative">
-            <span>November Drop 2026: Model routing, usage controls, and agent governance are live.</span>
-            <Link href="/platform" className="text-[#e5ff6b] hidden sm:inline">See what’s new →</Link>
-            <button aria-label="Dismiss" onClick={() => setBanner(false)} className="absolute right-4"><X size={14} /></button>
-          </div>
-        </div>
-      )}
       <div className="container-x flex h-[68px] items-center justify-between">
         <div className="flex items-center gap-12">
           <Link href="/" aria-label="CompassAI home"><Logo /></Link>
@@ -54,7 +44,7 @@ export function Header() {
         </div>
         <div className="flex items-center gap-6">
           <Link href="/login" className="hidden sm:block whitespace-nowrap text-muted hover:text-ink">Sign in</Link>
-          <Link href="/get-a-demo" className="btn btn-black hidden sm:inline-flex">Get a demo</Link>
+          <Link href="/signup" className="btn btn-black hidden sm:inline-flex">Sign up</Link>
           <button className="lg:hidden" aria-label="Menu" onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button>
         </div>
       </div>
@@ -77,7 +67,7 @@ export function Header() {
             ))}
             <div className="flex gap-3 py-5">
               <Link href="/login" className="btn btn-outline">Sign in</Link>
-              <Link href="/get-a-demo" className="btn btn-black">Get a demo</Link>
+              <Link href="/signup" className="btn btn-black">Sign up</Link>
             </div>
           </div>
         </div>

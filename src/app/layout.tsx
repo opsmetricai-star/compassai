@@ -6,9 +6,9 @@ const sans = Hanken_Grotesk({ subsets: ["latin"], variable: "--font-sans-var" })
 const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400"], variable: "--font-mono-var" });
 
 export const metadata: Metadata = {
-  title: "CompassAI – Work AI that understands your company",
+  title: "CompassAI | The AI engine for company knowledge",
   description:
-    "CompassAI connects your company knowledge, grounds every answer in cited sources, and puts agents to work across your teams.",
+    "CompassAI analyzes your internal documents, answers with cited evidence and automates repeatable work for business teams.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

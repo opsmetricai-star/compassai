@@ -55,7 +55,7 @@ export function Chat({ workspaces, initial, conversationId: cid, isPro }: { work
               {m.sources && m.sources.length > 0 && (
                 <div className="mt-4 border-t border-line pt-3 space-y-1.5">
                   <p className="eyebrow text-[12px]">Sources</p>
-                  {m.sources.map((s, j) => <p key={j} className="text-[13px] text-muted"><span className="text-brand">[{j + 1}]</span> {s.title}{s.snippet ? ` — “${s.snippet}…”` : ""}</p>)}
+                  {m.sources.map((s, j) => <p key={j} className="text-[13px] text-muted"><span className="text-brand">[{j + 1}]</span> {s.title}{s.snippet ? `: “${s.snippet}…”` : ""}</p>)}
                 </div>
               )}
             </div>

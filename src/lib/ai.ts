@@ -26,7 +26,7 @@ export async function generateGrounded(opts: {
   instructions?: string;
 }): Promise<AiResult> {
   const key = process.env.GEMINI_API_KEY;
-  if (!key) throw new Error("AI is not configured: GEMINI_API_KEY is missing on the server.");
+  if (!key) throw new Error("The AI service is temporarily unavailable.");
   const model = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
   const ai = new GoogleGenAI({ apiKey: key });
 

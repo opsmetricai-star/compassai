@@ -7,8 +7,8 @@ import { Logo } from "./Logo";
 
 type Mode = "login" | "signup" | "forgot" | "reset";
 const COPY: Record<Mode, { h: string; btn: string }> = {
-  login: { h: "Welcome back", btn: "Sign in" },
-  signup: { h: "Create your workspace", btn: "Create account" },
+  login: { h: "Sign in to CompassAI", btn: "Sign in" },
+  signup: { h: "Create your CompassAI account", btn: "Create account" },
   forgot: { h: "Reset your password", btn: "Send reset link" },
   reset: { h: "Choose a new password", btn: "Update password" },
 };
@@ -18,7 +18,7 @@ function Inner({ mode }: { mode: Mode }) {
   const sp = useSearchParams();
   const next = sp.get("next") ?? "/app";
   const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState(sp.get("error") === "config" ? "The server is not configured with Supabase yet." : "");
+  const [err, setErr] = useState(sp.get("error") === "config" ? "Sign in is temporarily unavailable. Please try again shortly." : "");
   const [info, setInfo] = useState("");
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
@@ -29,7 +29,7 @@ function Inner({ mode }: { mode: Mode }) {
     const password = String(f.get("password") ?? "");
     try {
       const sb = supabaseBrowser();
-      const origin = window.location.origin;
+      const origin = (process.env.NEXT_PUBLIC_SITE_URL || window.location.origin).replace(/[/]+$/, "");
       if (mode === "login") {
         const { error } = await sb.auth.signInWithPassword({ email, password });
         if (error) throw error;

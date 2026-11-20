@@ -13,7 +13,7 @@ export default async function Billing() {
       <div className="card mt-8 p-6">
         <div className="flex justify-between"><p className="text-[20px] text-ink capitalize">{p?.plan ?? "free"} plan</p><p className="text-muted">{p?.credits_used ?? 0} / {p?.credits_limit ?? 0} credits</p></div>
         <div className="mt-3 h-3 rounded-full bg-line overflow-hidden"><div className="h-full bg-brand" style={{ width: `${pct}%` }} /></div>
-        <p className="mt-2 text-[13px] text-muted">Current period started {p ? new Date(p.period_start).toLocaleDateString() : "—"}. Credits reset every 30 days.</p>
+        <p className="mt-2 text-[13px] text-muted">Current period started {p ? new Date(p.period_start).toLocaleDateString() : "Not available"}. Credits reset every 30 days.</p>
       </div>
       <div className="mt-8 grid md:grid-cols-2 gap-6">
         {PLANS.map((pl) => {
